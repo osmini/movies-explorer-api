@@ -1,7 +1,7 @@
-const User = require('../models/user'); // подключаем модель пользователей
 require('dotenv').config(); // импорт для работы с env
 const bcrypt = require('bcrypt'); // подключаем библиотеку для шифрования
 const jwt = require('jsonwebtoken'); // подключаем библиотеку для токенов
+const User = require('../models/user'); // подключаем модель пользователей
 const BadRequestError = require('../errors/badRequestError'); // подключаем класс ошибок 400
 const ForbiddenError = require('../errors/forbiddenError'); // подключаем класс ошибок 403
 const NotFoundErrors = require('../errors/notFoundErrors'); // подключаем класс ошибок 404
@@ -35,17 +35,18 @@ const createUser = (req, res, next) => {
       // шифруем пароль пользователя
 
       bcrypt.hash(password, Number(SALT_ROUNDS), (err, hash) => User.create({
-        email, password: hash, name
+        email, password: hash, name,
       })
-        .then((newUser) => res.status(201).send({
+        .then(() => res.status(201).send({
           email: newUser.email,
           name: newUser.name,
         }))
-        .catch((err) => {
+        .catch(() => {
           if (err.name === 'ValidationError') {
             next(new BadRequestError('Переданы некорректные данные пользователя'));
             return;
-            // В случае непредвиденной ошибки ответ повиснет, если условие if не сработало, то нужно направлять ошибку в блок next, чтобы вернулся код ответа 500:
+            // В случае непредвиденной ошибки ответ повиснет, если условие if
+            // не сработало, то нужно направлять ошибку в блок next, чтобы вернулся код ответа 500:
           }
           next(err);
         }));
@@ -67,15 +68,18 @@ const login = (req, res, next) => {
         next(new ForbiddenError('Такого пользователя не существует'));
         return;
       }
-      bcrypt.compare(password, user.password, (err, passwordMatch) => { // проводим проверку пароля предварительно его расшифровав
+      bcrypt.compare(password, user.password, (err, passwordMatch) => {
+        // проводим проверку пароля предварительно его расшифровав
         if (!passwordMatch) {
           next(new ForbiddenError('Неправельный пароль'));
           return;
         }
         // создаем и отдаем токен
-        const token = jwt.sign({ _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-        { expiresIn: '7d' });
+        const token = jwt.sign(
+          { _id: user._id },
+          NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+          { expiresIn: '7d' },
+        );
         // Api и front находятся на разных доменах
         // secure отпрака куки только по https
         res.cookie('jwt', token, {
@@ -100,9 +104,7 @@ const exitUser = (res, next) => {
 
 // получить информацию о себе
 const getInfoMe = (req, res, next) => {
-
   const userId = req.user._id;
-
   return User.findById(userId)
     .orFail(new Error('NotValidId'))
     .then((user) => res.status(200).send(user))

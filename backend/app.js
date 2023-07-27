@@ -5,33 +5,22 @@ const { errors } = require('celebrate'); // обработка ошибок от
 const cors = require('cors'); // подключаем бибилиотреку с работай ошибки cors
 const cookieParser = require('cookie-parser'); // библиотека для работы с куками
 const helmet = require('helmet'); // помогает защитить приложение Node.js от уязвимостей и кибератак
-const rateLimit = require('express-rate-limit'); // баблиотека ограничения запросов защита от DoS-атак
 const mongoose = require('mongoose'); // подключаем mongoose
 const routes = require('./routes/index'); // импортируем модуль всех роутеров приложения
 const hendlerErrors = require('./middlewares/errors'); // импортируем модуль обработки ошибок
 const { requestLogger, errorLogger } = require('./middlewares/logger'); // импорт логеров
+const { limiter } = require('./utils/limiter'); // импорт лимитера запросов
 
 // переменные окружения
 const { PORT, MONGO_URL } = process.env;
 
 // подключение к БД
-mongoose.connect(`${MONGO_URL}/bitfilmsdb`, {
-  useNewUrlParser: true,})
+mongoose.connect(`${MONGO_URL}/bitfilmsdb`, { useNewUrlParser: true })
   .then(() => {
     console.log('connected to db');
   });
 
-// настройка ограничения запросов
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
-
-
 const app = express(); // создаем приложение
-
 
 // важно писать запуск middleware в определенной очередности запросов
 // подключаем обработку запросов с других портов и доменов
@@ -52,7 +41,7 @@ app.get('/', (req, res) => {
   res.send('hello world2');
 });
 
-app.use('/api',routes); // подключаем обработку всех роутеров
+app.use('/api', routes); // подключаем обработку всех роутеров
 app.use(errorLogger); // подключаем логгер ошибок (Важно подключить до обработки ошибок)
 app.use(errors()); // // обработка ошибок celebrate
 app.use(hendlerErrors); // подключаем обработку ошибок после выполнения роутов

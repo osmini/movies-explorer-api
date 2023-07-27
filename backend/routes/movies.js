@@ -2,7 +2,7 @@ const router = require('express').Router(); // подключаем библио
 
 // импорт всех контролеров для работы с пользователями
 const {
-  getMovies, createMovies, delMovies
+  getMovies, createMovies, delMovies,
 } = require('../controllers/movies');
 
 // валидация приходящих на сервер данных

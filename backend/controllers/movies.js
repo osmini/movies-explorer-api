@@ -4,11 +4,11 @@ const ForbiddenError = require('../errors/forbiddenError'); // подключа�
 const NotFoundErrors = require('../errors/notFoundErrors'); // подключаем класс ошибок 404
 
 // получить все фильмы пользователя
-const getMovies = (req, res, next) => Movies.find({owner: req.user._id})
+const getMovies = (req, res, next) => Movies.find({ owner: req.user._id })
   .then((movies) => {
     if (!movies) {
       next(new NotFoundErrors({ message: 'Фильмы не найдены' }));
-      return;
+      return false;
     }
     return res.status(200).send(movies);
   })
@@ -29,7 +29,8 @@ const createMovies = (req, res, next) => {
     thumbnail,
     movieId,
     nameRU,
-    nameEN, } = req.body;
+    nameEN,
+  } = req.body;
 
   return Movies.create({
     country,
@@ -43,10 +44,10 @@ const createMovies = (req, res, next) => {
     owner: req.user._id,
     movieId,
     nameRU,
-    nameEN, })
+    nameEN,
+  })
     .then((newMovie) => res.status(201).send(newMovie))
     .catch((err) => {
-      console.log(err);
       if (err.name === 'ValidationError') {
         next(new BadRequestError('переданы некорректные данные о фильме'));
         return;
@@ -71,7 +72,6 @@ const delMovies = (req, res, next) => {
         next(new ForbiddenError('Вы не можите удалить чужой фильм'));
         return;
       }
-
       return Movies.deleteOne(movie)
         .then(() => res.status(200).send({ message: 'Фильм удален' }));
     })
